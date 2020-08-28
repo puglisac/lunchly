@@ -22,6 +22,10 @@ class Reservation {
         return moment(this.startAt).format('MMMM Do YYYY, h:mm a');
     }
 
+    getStartAtInput() {
+        return moment(this.startAt).format('YYYY-MM-DD hh:mm a')
+    }
+
     /** given a customer id, find their reservations. */
 
     static async getReservationsForCustomer(customerId) {
@@ -38,6 +42,28 @@ class Reservation {
         return results.rows.map(row => new Reservation(row));
     }
 
+    static async get(id) {
+        const results = await db.query(
+            `SELECT id, 
+          customer_id AS "customerId", 
+          num_guests AS "numGuests", 
+          start_at AS "startAt", 
+          notes AS "notes"
+        FROM reservations 
+        WHERE id = $1`, [id]
+        );
+
+        const reservation = results.rows[0];
+
+        if (reservation === undefined) {
+            const err = new Error(`No such customer: ${id}`);
+            err.status = 404;
+            throw err;
+        }
+
+        return new Reservation(reservation);
+    }
+
     async save() {
         if (this.id === undefined) {
             const result = await db.query(
@@ -48,7 +74,7 @@ class Reservation {
             this.id = result.rows[0].id;
         } else {
             await db.query(
-                `UPDATE customers SET start_at=$1, num_guests=$2, notes=$3
+                `UPDATE reservations SET start_at=$1, num_guests=$2, notes=$3
          WHERE id=$4`, [this.startAt, this.numGuests, this.notes, this.id]
             );
         }

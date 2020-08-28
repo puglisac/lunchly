@@ -117,4 +117,30 @@ router.post("/:id/add-reservation/", async function(req, res, next) {
     }
 });
 
+router.get("/:id/edit-reservation/", async function(req, res, next) {
+    try {
+        const reservation = await Reservation.get(req.params.id);
+
+        res.render("reservation_edit_form.html", { reservation });
+    } catch (err) {
+        return next(err);
+    }
+});
+
+
+router.post("/:id/edit-reservation/", async function(req, res, next) {
+    try {
+        const reservation = await Reservation.get(req.params.id);
+
+        reservation.startAt = req.body.startAt;
+        reservation.numGuests = req.body.numGuests;
+        reservation.notes = req.body.notes;
+        await reservation.save();
+
+        return res.redirect(`/${reservation.customerId}/`);
+    } catch (err) {
+        return next(err);
+    }
+});
+
 module.exports = router;
